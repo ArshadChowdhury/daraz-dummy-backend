@@ -20,8 +20,8 @@ import { ConfigModule } from '@nestjs/config';
       port: 5432,
       password: 'arshad',
       username: 'postgres',
-      entities: [Users],
       database: 'ecommerce',
+      entities: [User],
       synchronize: true,
       logging: true,
     }),
@@ -30,5 +30,6 @@ import { ConfigModule } from '@nestjs/config';
   ],
   controllers: [AppController],
   providers: [AppService],
+  exports: [TypeOrmModule]
 })
 export class AppModule {}

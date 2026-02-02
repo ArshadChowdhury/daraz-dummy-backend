@@ -55,7 +55,7 @@ export class AuthService {
     private configService: ConfigService,
     @InjectRepository(Users)
     private usersRepository: Repository<Users>,
-  ) {}
+  ) { }
 
   async register(registerDto: {
     email: string;
@@ -120,6 +120,10 @@ export class AuthService {
 
     // Generate tokens
     return this.generateTokens(user);
+  }
+
+  isTokenBlacklisted(jti: string): boolean {
+    return this.blacklistedTokens.has(jti);
   }
 
   async refreshToken(refreshToken: string) {
@@ -303,6 +307,7 @@ export class AuthService {
   // Private helper methods
   private async generateTokens(user: Users) {
     const jti = this.generateJti();
+
     const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
       sub: user.id,
       email: user.email,
@@ -311,13 +316,18 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload);
+
     const refreshToken = this.generateRefreshToken(user.id, jti);
+
+    console.log(accessToken);
+    console.log(refreshToken);
 
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
       expires_in: 900, // 15 minutes
       token_type: 'Bearer',
+      jti
     };
   }
 
@@ -362,19 +372,19 @@ export class AuthService {
     }
   }
 
-  private async handleFailedLogin(userId: string): Promise<void> {
-    const user = await this.findUserById(userId);
-    if (!user) return;
+  // private async handleFailedLogin(userId: string): Promise<void> {
+  //   const user = await this.findUserById(userId);
+  //   if (!user) return;
 
-    const loginAttempts = user.loginAttempts + 1;
+  //   const loginAttempts = user.loginAttempts + 1;
 
-    if (loginAttempts >= this.MAX_LOGIN_ATTEMPTS) {
-      const lockUntil = new Date(Date.now() + this.LOCK_TIME);
-      await this.lockUser(userId, lockUntil);
-    } else {
-      await this.incrementLoginAttempts(userId, loginAttempts);
-    }
-  }
+  //   if (loginAttempts >= this.MAX_LOGIN_ATTEMPTS) {
+  //     const lockUntil = new Date(Date.now() + this.LOCK_TIME);
+  //     await this.lockUser(userId, lockUntil);
+  //   } else {
+  //     await this.incrementLoginAttempts(userId, loginAttempts);
+  //   }
+  // }
 
   // Database interaction methods (implement based on your ORM/database)
   private async findUserByEmail(email: string): Promise<Users | null> {
@@ -417,13 +427,13 @@ export class AuthService {
     throw new Error('Method not implemented');
   }
 
-  private async saveEmailVerificationToken(
-    userId: string,
-    token: string,
-  ): Promise<void> {
-    // Implement your database save
-    throw new Error('Method not implemented');
-  }
+  // private async saveEmailVerificationToken(
+  //   userId: string,
+  //   token: string,
+  // ): Promise<void> {
+  //   // Implement your database save
+  //   throw new Error('Method not implemented');
+  // }
 
   private async savePasswordResetToken(
     userId: string,

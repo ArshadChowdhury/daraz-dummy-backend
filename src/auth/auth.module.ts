@@ -13,18 +13,30 @@ import { Users } from './entities/users.entity';
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     TypeOrmModule.forFeature([Users]),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET_KEY,
-      signOptions: {
-        expiresIn: '15m',
-        algorithm: 'HS256',
-        issuer: 'daraz-dummy-app',
-        audience: 'customers-ecommerce',
-      },
+    // JwtModule.registerAsync({
+    //   secret: process.env.JWT_SECRET_KEY,
+    //   signOptions: {
+    //     expiresIn: '15m',
+    //     algorithm: 'HS256',
+    //     issuer: 'daraz-dummy-app',
+    //     audience: 'customers-ecommerce',
+    //   },
+    // }),
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET_KEY'),
+        signOptions: {
+          expiresIn: '15m',
+          algorithm: 'HS256',
+          issuer: 'daraz-dummy-app',
+          audience: 'customers-ecommerce',
+        },
+      }),
     }),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtAuthGuard],
   exports: [AuthService, JwtAuthGuard],
 })
-export class AuthModule {}
+export class AuthModule { }
